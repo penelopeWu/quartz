@@ -1,4 +1,4 @@
-package quartz.followDoc;
+package quartz.followDoc.jobs;
 
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
