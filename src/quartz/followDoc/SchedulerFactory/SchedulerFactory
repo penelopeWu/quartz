@@ -1,0 +1,43 @@
+在 Quartz 进行工作之前需要被配置的组件主要有：
+• ThreadPool 线程池
+• JobStore
+• DataSources (如果需要)
+• Scheduler 本身
+ThreadPool（线程池）为Quartz运行任务时提供了一些线程。池中的线程越多，那么并
+发运行的任务数就越多。但是，过多的线程会降低系统的运行速度。大多数用户发现 5
+个或者相近的线程就已经足够了，因为任何给定的时间段内都不超过 100 个任务要运
+行，而且这些任务不会在同一时刻运行，同时任务活动时间很短（很快就结束了）。
+
+
+如果触发器触发的时间到了，却没有可用的线程，那么Quartz将会让这个任务等待，直
+到有线程可用。这样，任务的执行将比它因该执行的时间晚一些毫秒。如果scheduler
+的配置的“未触发极限”时限中仍然没有线程可用，这甚至会导致“未触发(misfire)”。
+
+
+ThreadPool 接口定义在 org.quartz.spi 中，你也可以创建一个自己的 ThreadPool
+（线程池）实现，Quartz 打包了一个简单（但非常满意的）的线程池，名为：
+org.quartz.simpl.SimpleThreadPool，这个线程池只是简单地在它的池中保持固定数
+量的线程，不增长也不缩小。但是它非常健壮且经过良好的测试，差不多每个 Quartz 用
+户都使用这个池。
+
+
+JobStores和DataSrouces在第九课中已经讨论过，值得注意的一个事实是所有的
+JobStores都实现了org.quartz.spi.JobStore接口，如果捆绑的JobStores不能满足你
+的要求，你可以自己开发一个。
+
+最后你需要创建自己的Scheduler实例。Scheduler本身需要给定一个名字，告诉它的
+RMI设置，处理的JobStore和ThreadPool实例。RMI包括是否Scheduler将自己创建为
+一个RMI服务对象（使它可以被远程连接），所使用的主机和端口等。
+StdSchedulerFactory（下面将要讨论）也能够创建Scheduler实例来代理远程过程中的
+Schedulers。
+
+StdSchedulerFactory 是对 org.quartz.SchedulerFactory 接口的一个实现。是
+使用一套属性(java.util.Properties)来创建和初始化 Quartz Scheduler。这些属性通常
+在文件中存储和加载。也可以通过编写程序来直接操作工厂。简单地调用工厂的
+getScheduler()就可以产生一个 scheduler，初始化（以及它的 ThreadPool、JobStore
+和 DataSources），并且返回一个公共的接口。
+
+DirectSchedulerFactory 是 SchedulerFactory 的另一个实现。它对于那些希望用
+更加程序化的方式创建 Scheduler 非常有用。不鼓励使用它的原因如下：
+(1) 它需要用户非常了解他们想要干什么。
+(2) 它不允许声明式的配置。换句话说，它使用硬编码的方式设置scheduler。

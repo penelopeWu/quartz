@@ -1,0 +1,25 @@
+ TriggerListeners 和 JobListeners
+ 
+ 监听器是在scheduler事件发生时能够执行动作的对象。可以看出，
+TriggerListeners接收与triggers相关的事件，而JobListeners则接收与Job相关的
+事件。
+Trigger相关的事件包括：trigger触发、trigger未触发，以及trigger完成（由trigger
+触发的任务被完成）。
+
+与任务相关的事件包括：即将被执行的任务的通知和任务已经执行完毕的通知
+
+使用你自定义的监听器
+创建监听器很简单，创建一个实现 org.quartz.TriggerListener 或（和）
+org.quartz.JobListener 的接口。监听器然后在执行的时候注册到 scheduler 中，而且
+必须给定一个名字（或者，它们必须通过他们的 getName()方法来介绍自己）。监听器
+可以被注册为“全局”的或者“非全局”。“全局”监听器接收所有 triggers/jobs 产生
+的事件，而“非全局”监听器只接受那些通过 getTriggerListenerNames() 或
+getJobListenerNames()方法显式指定监听器名的 triggers/jobs 所产生的事件。
+
+监听器在运行时向 scheduler 注册，并且不被存
+储在 jobs 和 triggers 的 JobStore 中。Jobs 和 Trigger 只存储了与他
+们相关的监听器的名字。因此，每次应用运行的时候，都需要向
+scheduler 重新注册监听器。
+
+Quartz 的大多数用户不使用监听器，但是当应用需要创建事件通知而 Job 本身不能
+显式通知应用，则使用监听器非常方便。

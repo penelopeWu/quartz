@@ -1,0 +1,83 @@
+Misfire Instructions—未触发指令
+
+Trigger的另一个重要属性就是它的“misfire instruction(未触发指令)”。
+
+如果因为scheduler被关闭而导致持久的触发器“错过”了触发时间，这时，未触发就发生了。
+
+不同类型的触发器有不同的未触发指令。
+
+缺省情况下，他们会使用一个“智能策略”指令——根据触发器类型和配置的不同产生不同动作。
+
+当scheduler开始时，它查找所有未触发的持久triggers，然后按照每个触发器所配置的未触发指令来更新它们。
+
+开始工程中使用Quartz的时，应熟悉定义在各个类型触发器上的未触发指令，以及它们在JavaDoc中的解释说明。
+
+关于未触发指令信息的详细说明将在每种特定的类型触发器的指南课程中给出。
+
+可以通过setMisfireInstruction(..)来为给定的触发器实例配置未触发指令。
+
+SimpleTrigger 的未触发指令
+“未触发”发生时，SimpleTrigger 有几个指令可以用来通知 Quartz 进行相关处理。
+（“未触发”在本指南中有关触发器的章节中介绍过）。这些指令以常量形式定义在
+SimpleTrigger 本身（通过 JavaDOC 查看它们的行为描述），这些指令如下：
+
+MISFIRE_INSTRUCTION_FIRE_NOW
+MISFIRE_INSTRUCTION_RESCHEDULE_NOW_WITH_EXISTING_REPEAT_COUNT
+MISFIRE_INSTRUCTION_RESCHEDULE_NOW_WITH_REMAINING_REPEAT_COUNT
+MISFIRE_INSTRUCTION_RESCHEDULE_NEXT_WITH_REMAINING_COUNT
+MISFIRE_INSTRUCTION_RESCHEDULE_NEXT_WITH_EXISTING_COUNT 
+
+
+每个触发器都有一个Trigger.MISFIRE_INSTRUCTION_SMART_POLICY指令可用，并且，这个指令对于每个类型的触发器都是缺省的。
+
+
+CronTriggers
+
+如果你需要像日历那样按日程来触发任务，而不是像 SimpleTrigger 那样每隔特定的间隔时间触发，CronTriggers 通常比 SimpleTrigger 更有用。 
+
+使用CronTrigger，你可以指定诸如“每个周五中午”，或者“每个工作日的 9:30”
+或者“从每个周一、周三、周五的上午 9：00 到上午 10：00 之间每隔五分钟”这样日程
+安排来触发。甚至，象SimpleTrigger一样，CronTrigger也有一个startTime以指定日
+程从什么时候开始，也有一个（可选的）endTime以指定何时日程不再继续。
+
+
+Cron表达式被用来配置CronTrigger实例。Cron表达式是一个由 7 个子表达式组成的字
+符串。每个子表达式都描述了一个单独的日程细节。这些子表达式用空格分隔，分别表示：
+
+1. Seconds 秒
+2. Minutes 分钟
+3. Hours 小时
+4. Day-of-Month 月中的天
+5. Month 月
+6. Day-of-Week 周中的天
+7. Year (optional field) 年（可选的域）
+一个cron表达式的例子字符串为"0 0 12 ? * WED",这表示“每周三的中午 12：00”。
+
+单个子表达式可以包含范围或者列表。例如：前面例子中的周中的天这个域（这里是
+"WED"）可以被替换为"MON-FRI", "MON, WED, FRI"或者甚至"MON-WED,SAT"。
+通配符（'*'）可以被用来表示域中“每个”可能的值。因此在"Month"域中的*表示
+每个月，而在 Day-Of-Week 域中的*则表示“周中的每一天”。
+所有的域中的值都有特定的合法范围，这些值的合法范围相当明显，例如：秒和分域
+的合法值为 0 到 59，小时的合法范围是 0 到 23，Day-of-Month 中值得合法凡范围是 0
+到 31，但是需要注意不同的月份中的天数不同。月份的合法值是 0 到 11。或者用字符串
+JAN,FEB MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV 及 DEC 来表示。
+Days-of-Week 可以用 1 到 7 来表示（1=星期日）或者用字符串 SUN, MON, TUE, WED,
+THU, FRI 和 SAT 来表示.
+
+'/'字符用来表示值的增量，例如, 如果分钟域中放入'0/15'，它表示“每隔 15 分钟，
+从 0 开始”，如果在份中域中使用'3/20'，则表示“小时中每隔 20 分钟，从第 3 分钟开
+始”或者另外相同的形式就是'3,23,43'。
+'?'字符可以用在 day-of-month 及 day-of-week 域中，它用来表示“没有指定值”。
+这对于需要指定一个或者两个域的值而不需要对其他域进行设置来说相当有用。看下面例
+子（以及 CronTrigger JavaDOC）会更清楚。
+'L'字符可以在 day-of-month 及 day-of-week 中使用，这个字符是"last"的简写，
+但是在两个域中的意义不同。例如，在 day-of-month 域中的"L"表示这个月的最后一天，
+即，一月的 31 日，非闰年的二月的 28 日。如果它用在 day-of-week 中，则表示"7"或
+者"SAT"。但是如果在 day-of-week 域中，这个字符跟在别的值后面，则表示"当月的最
+后的周 XXX"。例如："6L" 或者 "FRIL"都表示本月的最后一个周五。当使用'L'选项时，
+最重要的是不要指定列表或者值范围，否则会导致混乱。
+'W' 字符用来指定距离给定日最接近的周几（在 day-of-week 域中指定）。例如：
+如果你为 day-of-month 域指定为"15W",则表示“距离月中 15 号最近的周几”。
+'#'表示表示月中的第几个周几。例如：day-of-week 域中的"6#3" 或者 "FRI#3"
+表示“月中第三个周五”。
+

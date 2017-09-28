@@ -1,0 +1,5 @@
+TriggerUtils - Triggers Made Easy（TriggerUtils——使 Triggers 变得容易）
+TriggerUtils 类包含了创建触发器以及日期的便捷方法，而无须围绕
+java.util.Calendar 对象。使用这个类可以轻松地使触发器在每分钟，小时，日，星期，
+月等触发。使用这个类也可以产生距离触发最近的妙、分或者小时，这对设定触发开始时
+间非常有用。

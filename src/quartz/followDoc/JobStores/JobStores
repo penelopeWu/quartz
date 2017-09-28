@@ -1,0 +1,85 @@
+JobStore 负责保持对所有 scheduler “工作数据”追踪，这些工作数据包括：job
+（任务）,trigger（触发器）,calendar(日历)等。为你的 Quartz scheduler 选择合适的
+JobStore 是非常重要的一步，幸运的是，如果你理解了不同的 JobStore 之间的差别，
+那么选择就变得非常简单。在提供产生 scheduler 实例的 SchedulerFactory 的属性文
+件中声明 scheduler 所使用的 JobStore（以及它的配置）。
+
+
+不要在代码中直接使用 JobStore 实例，处于某些原因，很多人试图
+这么做。JobStore 是由 Quartz 自身在幕后使用。你必须告诉（通过配
+置）Quartz 使用哪个 JobStore，而你只是在你的代码中使用 Scheduler
+接口完成工作。
+
+
+RAMJobStore 
+
+RAMJobStore 是最简单的 JobStore，也是性能最好的（根据 CPU 时间）。从名
+字就可以直观地看出，RAMJobStore 将所有的数据都保存在 RAM 中。这就是为什么它
+闪电般的快速和如此容易地配置。缺点就是当应用结束时所有的日程信息都会丢失，这意
+味着 RAMJobStore 不能满足 Jobs 和 Triggers 的持久性（“non-volatility”）。对于
+有些应用来说，这是可以接受的，甚至是期望的行为。但是对于其他应用来说，这将是灾
+难。
+为了使用 RAMJobStore（假设你使用 StdSchedulerFactory），指使简单地将类
+名 org.quartz.simpl.RAMJobStore 作为你的 quartz 的配置值。
+
+org.quartz.jobStore.class = org.quartz.simpl.RAMJobStore 
+
+
+ok。
+
+
+JDBCJobStore
+JDBCJobStore 的命名也非常得体，它将所有的数据通过 JDBC 保存到数据库可中。
+它的配置要比 RAMJobStore 稍微复杂，同时速度也没有那么快。但是性能的缺陷不是非
+常差，尤其是如果你在数据库表的主键上建立索引。在一台主频为 800MHz 的 windows
+计算机上运行一个使用一个在不是很新 Solaris 系统上的 Oracle 数据库的 Quartz 应用，
+接收和更新正在触发的触发器以及与之相关的任务的时间大约为 15 毫秒。
+JDBCJobStore 几乎可以在任何数据库上工作，它广泛地使用 Oracle, MySQL, MS
+SQLServer2000, HSQLDB, PostreSQL 以及 DB2。要使用 JDBCJobStore，首先必
+须创建一套 Quartz 使用的数据库表，可以在 Quartz 的 docs/dbTables 找到创建库表
+的 SQL 脚本。如果没有找到你的数据库类型的脚本，那么找到一个已有的，修改成为你
+数据库所需要的。需要注意的一件事情就是所有 Quartz 库表名都以 QRTZ_作为前缀（例
+如：表"QRTZ_TRIGGERS",及"QRTZ_JOB_DETAIL"）。实际上，可以你可以将前缀
+设置为任何你想要的前缀，只要你告诉 JDBCJobStore 那个前缀是什么即可（在你的
+Quartz 属性文件中配置）。对于一个数据库中使用多个 scheduler 实例，那么配置不同
+的前缀可以创建多套库表，十分有用。
+一旦数据库表已经创建，在配置和启动JDBCJobStore之前，就需要作出一个更加重
+要的决策。你要决定在你的应用中需要什么类型的事务。如果不想将scheduling命令绑到
+其他的事务上，那么你可以通过对JobStore使用JobStoreTX来让Quartz帮你管理事务
+（这是最普遍的选择）。
+如果想让Quartz同其他的事务协同工作（例如：J2EE应用服务器中的事务），那么
+你需要使用JobStoreCMT，这样，Quartz就会让应用服务器容器来管理事务。
+最后的疑问就是如何建立获得数据库联接的数据源（DataSource）。Quartz 属性中
+定义数据源有几个不同的途径。一个途径就是通过提供所有联接数据库的信息，让 Quartz
+自己创建和管理数据源。另一个途径就是通过提供数据源 JNDI 名字来让 Quartz 使用其
+所在应用服务器提供的数据源。详细的属性设置请参照"docs/config"文件夹中的例子配
+置文件。
+
+要使用 JDBCJobStore（假定使用 StdSchedulerFactory），首先需要设置 Quartz
+配置中的 JobStore class 属性为 org.quartz.impl.jdbcjobstore.JobStoreTX 或者
+org.quartz.impl.jdbcjobstore.JobStoreCMT，这取决于对事务的选择，前面已经介绍
+过。
+
+org.quartz.jobStore.class = org.quartz.impl.jdbcjobstore.JobStoreTX 
+
+
+下一步，需要为 JobStore 选择一个 DriverDelegate ， DriverDelegate 负责做指
+定数据库的所有 JDBC 工作。
+
+org.quartz.jobStore.driverDelegateClass =
+org.quartz.impl.jdbcjobstore.StdJDBCDelegate 
+
+接下来，需要为 JobStore 指定所使用的数据库表前缀：
+
+org.quartz.jobStore.tablePrefix = QRTZ_ 
+
+最后，需要设置 JobStore 所使用的数据源。必须在 Quartz 属性中定义已命名的数
+据源，比如，我们指定 Quartz 使用名为"myDS"的数据源
+
+org.quartz.jobStore.dataSource = myDS 
+
+为了指示 JDBCJobStore 所有的 JobDataMaps 中的值都是字符串，并
+且能以“名字-值”对的方式存储而不是以复杂对象的序列化形式存储在
+BLOB 字段中，应设置 org.quartz.jobStore.useProperties 配置参数
+的值为"true"(这是缺省的方式)。这样做，从长远来看非常安全，这样避
+免了对存储在 BLOB 中的非字符串的序列化对象的类型转换问题。

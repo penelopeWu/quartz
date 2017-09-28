@@ -1,0 +1,8 @@
+SchedulerListeners同TriggerListeners及JobListeners非常相似，
+SchedulerListeners只接收与特定trigger 或job无关的Scheduler自身事件通知。
+Scheduler 相关的事件包括：增加 job 或者 trigger,移除 Job 或者 trigger,
+scheduler 内部发生的错误，scheduler 将被关闭的通知，以及其他。
+
+除了不分“全局”或者“非全局”监听器外，SchedulerListeners 创建及注册的方
+法同其他监听器类型十分相同。所有实现 org.quartz.SchedulerListener 接口的对象都
+是 SchedulerListeners。

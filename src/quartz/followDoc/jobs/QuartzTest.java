@@ -45,10 +45,11 @@ public class QuartzTest {
 			Trigger trigger = TriggerBuilder.newTrigger()
 					.withIdentity("trigger1","group1")
 					.startNow()
-						.withSchedule(SimpleScheduleBuilder.simpleSchedule()
-								.withIntervalInSeconds(40)
-								.repeatForever())
-						.build();
+					.withSchedule(SimpleScheduleBuilder.simpleSchedule()
+						.withIntervalInSeconds(40)
+						.repeatForever()
+						.withRepeatCount(2))
+					.build();
 			
 			//tell quartz to schedule the job using our trigger
 			/**
@@ -61,7 +62,7 @@ public class QuartzTest {
 			 * 这等价于将其放入缺省的 Scheduler.DEFAULT_GROUP 组中。
 			 */
 			scheduler.scheduleJob(job,trigger);
-			
+//			scheduler.getListenerManager();
 			
 			//off it
 			scheduler.shutdown();

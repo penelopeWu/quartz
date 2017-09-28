@@ -1,0 +1,9 @@
+目前，集群只能用在使用 JDBC-Jobstore（JobStoreTX 中 JobStoreCMT）的
+情况。特新包括负载均衡和容错（如果 JobDetail 的"request recovery"标记被设置为
+true）。
+设置"org.quartz.jobStore.isClustered"属性为 true 才可以集群，集群中的每个实
+例都使用 quartz.properties 的相同拷贝。集群所使用属性文件的例外是一致的，下面是
+允许的例外：不同的线程池数量，"org.quartz.scheduler.instanceId"的不同属性值。
+集群中的每个节点必须有唯一的 instanceId，通过替换这个属性的值为"AUTO"就可以轻
+松做到（不要不同的属性文件）。
+
